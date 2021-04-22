@@ -4,7 +4,7 @@ library(htmlwidgets)
 library(raster)
 library(rgdal)
 
-setwd("Z:/DPAA_GW/Wells_DB")
+setwd("..")
 
 #####
 #Load data
@@ -445,97 +445,3 @@ gwe3.stahl95 = gwe3[tw$Site_ID %in% twc95.stahl$Site_ID,]
 mean(apply(apply(gwe3, 1, range, na.rm = TRUE), 2, diff))
 mean(apply(apply(gwe3.stahl68, 1, range, na.rm = TRUE), 2, diff))
 mean(apply(apply(gwe3.stahl95, 1, range, na.rm = TRUE), 2, diff))
-
-#####
-gwz = gwe3
-for(i in 1:7){
-  gwz[,i] = (tw$d18O - gwe3[,i]) / sqrt(gwe3sd[,i]^2 + 0.51^2) 
-}
-
-plot(raster(log(abs(gwz))), col = heat.colors(10))
-
-
-#plot well depth/isotope distributions and tap isotopes
-png("ladderPlot.png", width = 8, height = 6, units = "in", res = 600)
-cols = rev(rainbow(9))
-rng = range(susa.gw, na.rm = TRUE)
-plot(0, 0, xlim = c(0, length(susa)), ylim = c(-2000, 0), col = "white",
-     xlab = "Town", ylab = "Depth (m)")
-for(i in 1:length(susa)){
-  for(j in 1: ncol(susa.gw)){
-    if(!is.na(susa.gw[i, j])){
-      colr = ceiling((susa.gw[i, j] - rng[1]) / diff(rng) * 9)
-      lines(c(i, i), 1 - exp(c(ud[j], ld[j])), lw = 4, col = cols[colr])
-    }
-  }
-}
-points(seq(1:length(susa)), rep(30, length(susa)), pch=21, bg = cols[ceiling((susa$d18O - rng[1]) / diff(rng) * 9)])
-vals = round(seq(rng[2], rng[1], length.out = 10), 1)
-legend(61, -1100, paste(vals[1:9], "-", vals[2:10]), col = rev(cols), lwd = 4, ncol = 1,
-       bty = "n", cex = 0.85)
-text(70, -1020, expression(delta^{18}*"O"))
-dev.off()
-
-sqrt(mean(susa.p.lm$residuals^2))
-sqrt(mean(susa.gwmean.lm$residuals^2))
-
-p.yes = susa$d18O > (susa.p - susa.psd) & susa$d18O < (susa.p + susa.psd)
-p.yes = p.yes[!is.na(p.yes)]
-length(p.yes[p.yes == TRUE])/length(p.yes)
-
-gw.yes = susa$d18O > (susa.gwmean - susa.gwsd) & susa$d18O < (susa.gwmean + susa.gwsd)
-gw.yes = gw.yes[!is.na(gw.yes)]
-length(gw.yes[gw.yes == TRUE])/length(gw.yes)
-
-png("residual_density.png", units = "in", width = 6, height = 4, res = 600)
-gw.z = (susa$d18O - susa.gwmean) / susa.gwsd
-p.z = (susa$d18O - susa.p) / susa.psd
-plot(density(p.z, na.rm = TRUE), ylim = c(0, 0.40), col = "blue", main = "",
-     xlab = "Standardized residual (observed - predicted)")
-lines(density(gw.z, na.rm = TRUE), col = "red")
-lines(density(rnorm(1e6)))
-dev.off()
-
-#####
-# assignments
-#####
-
-require(assignR)
-
-#get the data
-humans = subOrigData(marker = "d18O", group = "Modern human", mask = states)
-h.spdf = humans$data
-h.spdf = spTransform(h.spdf, CRS(proj4string(tw)))
-indx = zerodist2(h.spdf, tw, 1e4)
-h.spdf = h.spdf[unique(indx[,1]),]
-humans$data = h.spdf
-
-#prep GW
-gw_iso = brick(gw$mean, gw$sd)
-for(i in 1:ncell(gw_iso[[1]])){
-  if(is.na(gw_iso[[1]][i])){
-    gw_iso[[1]][i] = pcp[[1]][i]
-    gw_iso[[2]][i] = pcp[[2]][i]
-  }
-}
-
-#run QA
-qa.p = QA(humans, pcp, valiStation = 5, mask = states, name = "Precipitation")
-qa.g = QA(humans, gw_iso, valiStation = 5, mask = states, name = "Groundwater")
-qa.out = list("Precipitation" = qa.p, "Groundwater" = qa.g)
-save(qa.out, file = "qa.rda")
-plot(qa.p, qa.g)
-
-mvd = list()
-j = 1
-#try a multivariate density
-for(i in 1:7){
-  if(!is.na(gwe3[j, i])){
-    mvd[[i]] = list(i, density(rnorm(1e4, gwe3[j, i], sqrt(gwe3sd[j, i]^2 + 0.5^2))))  
-  }
-}
-
-plot(mvd[[1]][[2]], main = "", col = mvd[[1]][[1]])
-for(i in 2:length(mvd)){
-  lines(mvd[[i]][[2]], main = "", col = mvd[[i]][[1]])
-}
