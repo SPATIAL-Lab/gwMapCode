@@ -201,7 +201,48 @@ mean(localSD)
 cellStats(isoctr, max)
 save(localSD, file = "localSD.rda")
 
+#Repeat with different resolutions to test number and variance within voxels
+res = c(2500, 10000, 25000, 50000, 100000)
+xdim = ceiling((xmx - xmn)/res)
+ydim = ceiling((ymx - ymn)/res)
+
+sts = data.frame("SD" = numeric(5), "CT" = numeric(5), "NSD" = numeric(5), "N" = numeric(5))
+
+for(k in 1:5) {
+  stime = proc.time()
+  gd = GridTopology(c(bbox(wd)[1,1]+res[k]/2, bbox(wd)[2,1]+res[k]/2), 
+                    c(res[k],res[k]), c(xdim[k], ydim[k]))
+  polys = as.SpatialPolygons.GridTopology(gd)
+  proj4string(polys) = proj4string(wd)
+  
+  isosdr = isoctr = isonsd = ison = 0
+  
+  #find all grid depths w/ isotope data
+  for(i in 1:length(polys)){
+    w = wigw.usa[which(!is.na(over(x=wigw.usa, y=polys[i]))),]
+    if(length(w) > 0){
+      for(j in 1:length(ud)){
+        wl = w$d18O[w$lnWD > ud[j] & w$lnWD <= ld[j]]
+        if(length(wl)  > 0){
+          if(length(wl) > 1) {
+            isosdr = isosdr + sd(w$d18O[w$lnWD > ud[j] & w$lnWD <= ld[j]], na.rm = TRUE)
+            isonsd = isonsd + 1
+          }
+          isoctr = isoctr + length(w$d18O[w$lnWD > ud[j] & w$lnWD <= ld[j]])
+          ison = ison + 1
+        }
+      }
+    }
+  }
+  sts[k,] = c(isosdr / isonsd, isoctr / ison, isonsd, ison)
+  print(paste("Grid", res[k], "done in", proc.time()[3] - stime[3], "seconds"))
+}
+View(sts)
+
 # Subsurface averages for d2H -----
+res = 25000
+xdim = ceiling((xmx - xmn)/res)
+ydim = ceiling((ymx - ymn)/res)
 
 #multiband raster to store subsurface data
 isor = raster(nrows = ydim, ncols = xdim, xmn = xmn, xmx = xmn + (xdim) * res, 

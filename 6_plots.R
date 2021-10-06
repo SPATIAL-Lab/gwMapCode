@@ -15,6 +15,7 @@ load("idr.rda")
 load("cdr.rda")
 load("wellDepths.rda")
 load("wellIsotopes.rda")
+load("depths.rda")
 
 #Facet plots
 
@@ -35,18 +36,18 @@ saveWidget(cubeview(cdr[[7:1]], c(-0.5, 0.5, 1.5, 2.5, 3.5), col.regions = c("gr
 png("Fig1.png", width = 5, height = 4, units = "in", res = 600)
 par(mar = c(5,5,1,1))
 plot(density(wd$lnWD, adjust = 4), main = "", 
-     xlab = "Well depth (m)", col = "blue", axes = FALSE)
+     xlab = "Well depth (m)", col = "steelblue2", axes = FALSE)
 axis(2)
 axis(1, log(c(1, 10, 25, 100, 500, 2000)), 
      c(1, 10, 25, 100, 500, 2000))
 box()
-lines(density(wigw.usa$lnWD), col = "red")
-text(0, 0.4, paste("n =", length(wd)), col = "blue", pos = 4)
-text(0, 0.35, paste("n =", length(wigw.usa)), col = "red", pos = 4)
+lines(density(wigw.usa$lnWD), col = "tomato1")
+text(0, 0.4, paste("n =", length(wd)), col = "steelblue2", pos = 4)
+text(0, 0.35, paste("n =", length(wigw.usa)), col = "tomato1", pos = 4)
 dev.off()
 
 #Explore comparisons between USGS prinicipal aquifers and grid 
-aqs = readOGR("../USGS_layers/aquifrp025.shp")
+aqs = readOGR("USGS_layers/aquifrp025.shp")
 states = readOGR("states_shapefile/states.shp")
 proj4string(aqs) = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
 aqs = spTransform(aqs, proj4string(cdr))
@@ -57,7 +58,7 @@ states = states[2:50,]
 aqz = unique(aqs$AQ_NAME)
 i=3
 for(aq in aqz){
-  plot(cdr[[i]], col = c("grey", "blue", "red", "purple"), legend = FALSE, 
+  plot(cdr[[i]], col = c("grey75", "steelblue2", "tomato1", "mediumpurple2"), legend = FALSE, 
        axes = FALSE, box = FALSE)
   lines(aqs[aqs$AQ_NAME == aq,])
   text(1.2e6, 2.8e6, aq, adj = 0.5)
@@ -83,42 +84,44 @@ layout(matrix(c(1,2,3), nrow = 3))
 par(mai = c(0.1, 0.1, 0.1, 0.1))
 
 i = 1
-plot(cdr[[i]], col = c("grey", "blue", "red", "purple"), legend = FALSE, 
-     axes = FALSE, box = FALSE)
-lines(states, col = 1)
+plot(cdr[[i]], col = c("grey75", "steelblue2", "tomato1", "mediumpurple2"), 
+     legend = FALSE, axes = FALSE, box = FALSE)
+lines(states, col = "grey25")
 text(-2.4e6, 3e6, "A", cex = 3)
-lt = paste(round(exp(ud[i]), 0), "-", round(exp(ld[i]), 0), "m")
+lt = paste(round(exp(depths$ud[i]), 0), "-", round(exp(depths$ld[i]), 0), "m")
 text(1.2e6, 2.8e6, lt, adj = 0.5, cex = 2)
-lines(aqs[aqs$AQ_CODE %in% c(107),], col = "orange")
-shadowtext(-0.3e6, 2.1e6, "HP", cex = 2, col = "orange")
+lines(aqs[aqs$AQ_CODE %in% c(107),], lw = 2)
+shadowtext(-0.3e6, 2.1e6, "HP", cex = 2, col = "black", bg = "lightyellow")
+lines(c(-2e6, -2e6, -1e6, -1e6), c(5.5e5, 5e5, 5e5, 5.5e5))
+text(-1.5e6, 6e5, "1000 km", cex = 1.5)
 
 i = 4
-plot(cdr[[i]], col = c("grey", "blue", "red", "purple"), legend = FALSE, 
-     axes = FALSE, box = FALSE)
-lines(states)
+plot(cdr[[i]], col = c("grey75", "steelblue2", "tomato1", "mediumpurple2"), 
+     legend = FALSE, axes = FALSE, box = FALSE)
+lines(states, col = "grey25")
 text(-2.4e6, 3e6, "B", cex = 3)
-lt = paste(round(exp(ud[i]), 0), "-", round(exp(ld[i]), 0), "m")
+lt = paste(round(exp(depths$ud[i]), 0), "-", round(exp(depths$ld[i]), 0), "m")
 text(1.2e6, 2.8e6, lt, adj = 0.5, cex = 2)
-lines(aqs[aqs$AQ_CODE %in% c(107, 315, 115),], col = "orange")
-shadowtext(-1.8e6, 2.8e6, "WV", cex = 2, col = "orange")
-shadowtext(-0.3e6, 2.1e6, "HP", cex = 2, col = "orange")
-shadowtext(-0.1e6, 2.6e6, "UC", cex = 2, col = "orange")
+lines(aqs[aqs$AQ_CODE %in% c(107, 315, 115),], lw = 2)
+shadowtext(-1.8e6, 2.8e6, "WV", cex = 2, col = "black", bg = "lightyellow")
+shadowtext(-0.3e6, 2.1e6, "HP", cex = 2, col = "black", bg = "lightyellow")
+shadowtext(-0.1e6, 2.6e6, "UC", cex = 2, col = "black", bg = "lightyellow")
 
 i = 6
-plot(cdr[[i]], col = c("grey", "blue", "red", "purple"), legend = FALSE, 
-     axes = FALSE, box = FALSE)
-lines(states)
+plot(cdr[[i]], col = c("grey75", "steelblue2", "tomato1", "mediumpurple2"), 
+     legend = FALSE, axes = FALSE, box = FALSE)
+lines(states, col = "grey25")
 text(-2.4e6, 3e6, "C", cex = 3)
-lt = paste(round(exp(ud[i]), 0), "-", round(exp(ld[i]), 0), "m")
+lt = paste(round(exp(depths$ud[i]), 0), "-", round(exp(depths$ld[i]), 0), "m")
 text(1.2e6, 2.8e6, lt, adj = 0.5, cex = 2)
-lines(aqs[aqs$AQ_CODE %in% c(405, 106, 302, 202, 115, 112, 606),], col = "orange")
+lines(aqs[aqs$AQ_CODE %in% c(405, 106, 302, 202, 115, 112, 606),], lw = 2)
 
-shadowtext(-1.8e6, 2.8e6, "WPS", cex = 2, col = "orange")
-shadowtext(-2.3e6, 1.7e6, "CV", cex = 2, col = "orange")
-shadowtext(-1.45e6, 2.55e6, "SRP", cex = 2, col = "orange")
-shadowtext(-0.5e6, 1.9e6, "DB", cex = 2, col = "orange")
-shadowtext(0.1e6, 1.85e6, "OP", cex = 2, col = "orange")
-shadowtext(0.2e6, 0.8e6, "TCU", cex = 2, col = "orange")
+shadowtext(-1.8e6, 2.8e6, "WPS", cex = 2, col = "black", bg = "lightyellow")
+shadowtext(-2.3e6, 1.7e6, "CV", cex = 2, col = "black", bg = "lightyellow")
+shadowtext(-1.45e6, 2.55e6, "SRP", cex = 2, col = "black", bg = "lightyellow")
+shadowtext(-0.5e6, 1.9e6, "DB", cex = 2, col = "black", bg = "lightyellow")
+shadowtext(0.1e6, 1.85e6, "OP", cex = 2, col = "black", bg = "lightyellow")
+shadowtext(0.2e6, 0.8e6, "TCU", cex = 2, col = "black", bg = "lightyellow")
 
 dev.off()
 
@@ -139,7 +142,6 @@ n.s = sum(raster::cellStats(n, "sum"))
 #fraction of all cells with aquifer
 anyWell.s / n.s
 
-load("depths.rda")
 #now do that by depth
 for(i in 1:7){
   print(paste(exp(depths$ud[i]), ":", exp(depths$ld[i])))
@@ -158,13 +160,9 @@ load("isoscape.rda")
 load("isovar.rda")
 load("variograms.rda")
 load("variomodels.rda")
-saveWidget(cubeview(r.ps.b[[7:1]], seq(-20, 4, by=2)), "FigS4.html")
+saveWidget(cubeview(r.ps.b[[7:1]], seq(-20, 4, by=2)), "FigS5.html")
 saveWidget(cubeview(r.vs.b[[7:1]], c(0.4, 0.6, 0.9, 1.3, 1.8, 2.4, 3.1, 4)), 
-           "FigS5.html")
-
-states = readOGR("states_shapefile/states.shp")
-states = states[2:50,]
-states = spTransform(states, crs(r.ps.b))
+           "FigS6.html")
 
 #FIGURE 3 showing example layers from isoscape
 png("Fig3.png", res = 600, units = "in", width = 8, height = 12)
@@ -175,15 +173,17 @@ par(mai = c(0.1, 0.1, 0.1, 0.1))
 i = 1
 plot(states, col = "grey")
 plot(r.ps.b[[i]], col = rev(heat.colors(15)), add = TRUE, legend = FALSE)
-lines(states)
+lines(states, col = "grey25")
 text(-2.4e6, 3e6, "A", cex = 3)
 lt = paste(round(exp(depths$ud[i]), 0), "-", round(exp(depths$ld[i]), 0), "m")
 text(1.2e6, 2.8e6, lt, adj = 0.5, cex = 2)
+lines(c(-2e6, -2e6, -1e6, -1e6), c(5.5e5, 5e5, 5e5, 5.5e5))
+text(-1.5e6, 6e5, "1000 km", cex = 1.5)
 
 i = 3
 plot(states, col = "grey")
 plot(r.ps.b[[i]], col = rev(heat.colors(15)), add = TRUE, legend = FALSE)
-lines(states)
+lines(states, col = "grey25")
 plot(r.ps.b[[i]], col = rev(heat.colors(15)), legend.only = TRUE,
      smallplot = c(0.9, 0.92, 0.2, 0.8),
      axis.args = list(cex.axis = 1.5),
@@ -196,7 +196,7 @@ text(1.2e6, 2.8e6, lt, adj = 0.5, cex = 2)
 i = 5
 plot(states, col = "grey")
 plot(r.ps.b[[i]], col = rev(heat.colors(15)), add = TRUE, legend = FALSE)
-lines(states)
+lines(states, col = "grey25")
 text(-2.4e6, 3e6, "C", cex = 3)
 lt = paste(round(exp(depths$ud[i]), 0), "-", round(exp(depths$ld[i]), 0), "m")
 text(1.2e6, 2.8e6, lt, adj = 0.5, cex = 2)
@@ -209,6 +209,21 @@ dev.off()
 
 pcp = raster("C:/Users/u0133977/Dropbox/Archived/Utilities/IsotopeMaps/Oma.asc")
 pcp = projectRaster(pcp, r.ps.b)
+
+#first compare our map w/ the most recent Terzer product, downloaded from 
+#https://isotopehydrologynetwork.iaea.org/
+pcp.t1 = raster("O18_W120_N0_13.tif")
+pcp.t2 = raster("O18_W120_N30_13.tif")
+pcp.t3 = raster("O18_W90_N0_13.tif")
+pcp.t4 = raster("O18_W90_N30_13.tif")
+pcp.t5 = raster("O18_W150_N30_13.tif")
+
+pcp.t = mosaic(pcp.t1, pcp.t2, pcp.t3, pcp.t4, pcp.t5, fun = "mean")
+pcp.t = projectRaster(pcp.t, pcp)
+plot(pcp.t - pcp)
+plot(r.ps.b[[c(1, 3, 5)]] - pcp.t)
+
+#now GW-PCP differences
 gwdif = r.ps.b - pcp
 
 save(gwdif, file = "gwdiff.rda")
@@ -217,7 +232,7 @@ load("gwdiff.rda")
 breaks = c(-13, -4, -2, -1, 0, 1, 2, 4, 10)
 
 cols = brewer.pal(8, "RdYlBu")
-saveWidget(cubeview(gwdif[[7:1]], breaks, rev(cols)), "FigS6.html")
+saveWidget(cubeview(gwdif[[7:1]], breaks, rev(cols)), "FigS7.html")
 
 #FIGURE 4 showing precip-gw layers
 png("Fig4.png", res = 600, units = "in", width = 8.2, height = 12)
@@ -229,16 +244,18 @@ i = 1
 plot(states, col = "grey")
 plot(gwdif[[i]], breaks = breaks, col = rev(cols), 
      add = TRUE, legend = FALSE)
-lines(states)
+lines(states, col = "grey25")
 text(-2.4e6, 3e6, "A", cex = 3)
-lt = paste(round(exp(ud[i]), 0), "-", round(exp(ld[i]), 0), "m")
+lt = paste(round(exp(depths$ud[i]), 0), "-", round(exp(depths$ld[i]), 0), "m")
 text(1.2e6, 2.8e6, lt, adj = 0.5, cex = 2)
+lines(c(-2e6, -2e6, -1e6, -1e6), c(5.5e5, 5e5, 5e5, 5.5e5))
+text(-1.5e6, 6e5, "1000 km", cex = 1.5)
 
 i = 3
 plot(states, col = "grey")
 plot(gwdif[[i]], breaks = breaks, col = rev(cols), 
      add = TRUE, legend = FALSE)
-lines(states)
+lines(states, col = "grey25")
 plot(gwdif[[i]], breaks = breaks, col = rev(cols), 
      legend.only = TRUE, add = TRUE,
      smallplot = c(0.9, 0.92, 0.2, 0.8),
@@ -246,16 +263,16 @@ plot(gwdif[[i]], breaks = breaks, col = rev(cols),
      legend.args = list(text = expression("Groundwater - precipitation "*delta^{18}*"O"), 
                         side = 2, line = 0.5, cex = 1.2))
 text(-2.4e6, 3e6, "B", cex = 3)
-lt = paste(round(exp(ud[i]), 0), "-", round(exp(ld[i]), 0), "m")
+lt = paste(round(exp(depths$ud[i]), 0), "-", round(exp(depths$ld[i]), 0), "m")
 text(1.2e6, 2.8e6, lt, adj = 0.5, cex = 2)
 
 i = 5
 plot(states, col = "grey")
 plot(gwdif[[i]], breaks = breaks, col = rev(cols), 
      add = TRUE, legend = FALSE)
-lines(states)
+lines(states, col = "grey25")
 text(-2.4e6, 3e6, "C", cex = 3)
-lt = paste(round(exp(ud[i]), 0), "-", round(exp(ld[i]), 0), "m")
+lt = paste(round(exp(depths$ud[i]), 0), "-", round(exp(depths$ld[i]), 0), "m")
 text(1.2e6, 2.8e6, lt, adj = 0.5, cex = 2)
 
 dev.off()
@@ -263,10 +280,10 @@ dev.off()
 #Plot residuals -----
 load("krigCV.rda")
 load("depths.rda")
-png("FigS7.png", width = 5, height = 4, units = "in", res = 600)
+png("FigS4.png", width = 5, height = 4, units = "in", res = 600)
 par(mar = c(5, 5, 1, 1))
 plot(density(cv[[1]]$residual), xlab = "Cross-validation error", main = "", 
-     ylim = c(0, 0.8))
+     ylim = c(0, 1))
 for(i in 2:7){
   lines(density(cv[[i]]$residual), col = i)
 }
@@ -291,10 +308,12 @@ plot(gw$mean, breaks = breaks, col = cols,
      legend.args = 
        list(text = expression("Ground or tap water "*delta^{18}*"O"), 
             side = 2, line = 0.5))
-lines(states)
+lines(states, col = "grey25")
 pcol = ceiling((tw$d18O - min(breaks)) / 2)
 points(tw@coords, pch = 21, bg = cols[pcol])
 text(-2.4e6, 3e6, "A", cex = 2.5)
+lines(c(-2e6, -2e6, -1e6, -1e6), c(5.5e5, 5e5, 5e5, 5.5e5))
+text(-1.5e6, 6e5, "1000 km")
 
 plot(states, col = "grey")
 plot(gw$max - gw$min, col = rev(heat.colors(15)), axes = FALSE, box = FALSE, 
@@ -302,7 +321,7 @@ plot(gw$max - gw$min, col = rev(heat.colors(15)), axes = FALSE, box = FALSE,
      legend.args = 
        list(text = expression("Groundwater "*delta^{18}*"O range"), 
             side = 2, line = 0.5))
-lines(states)
+lines(states, col = "grey25")
 text(-2.4e6, 3e6, "B", cex = 2.5)
 dev.off()
 
@@ -319,7 +338,7 @@ pcp = projectRaster(pcp, gw)
 pwe = extract(pcp, tw)
 
 #Stahl isoscape
-gw.stahl = raster("../Stahl/RF_model_GW_isotopes_O.gri")
+gw.stahl = raster("Stahl/RF_model_GW_isotopes_O.gri")
 proj4string(gw.stahl) = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
 gw.stahl = projectRaster(gw.stahl, gw)
 
@@ -406,6 +425,7 @@ sum(tw$d18O > gwe.stahl - 0.2 & tw$d18O < gwe.stahl + 0.2, na.rm = TRUE) /
 sum(tw$d18O > gwe.stahl - 0.2 * 1.96 & tw$d18O < gwe.stahl + 0.2 * 1.96, na.rm = TRUE) / 
   sum(!is.na(gwe.stahl))
 
+#for precipitation
 sum(tw$d18O > pwe[,1] - pwe[,2] & tw$d18O < pwe[,1] + pwe[,2], na.rm = TRUE) / 
   sum(!is.na(pwe[,1]))
 sum(tw$d18O > pwe[,1] - 1.96 * pwe[,2] & tw$d18O < pwe[,1] + 1.96 * pwe[,2], na.rm = TRUE) / 

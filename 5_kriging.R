@@ -7,40 +7,35 @@ setwd("..")
 
 #raster layers as input
 load("aquifer3d.rda")
-load("iso3d.rda")
+#load("iso3d.rda")
+load("2dVario.rda")
+load("wis.rda")
 
 # kriging for d18O -----
 
 #space for output
 vs = vms = ps = r.ps = r.vs = cv = list()
-np = numeric(nlayers(aq))
 
 registerDoParallel(7)
 
-ko = foreach(i = 1:nlayers(aq)) %dopar% {
+ko = foreach(i = 1:nlayers(aq), .packages = c("gstat", "raster")) %dopar% {
   #grid for prediction
   grd = aq[[i]]
-  grdpts = rasterToPoints(grd, fun = function(x){x==1}, spatial = TRUE)
+  grdpts = rasterToPolygons(grd, fun = function(x){x==1})
   
-  #convert raster to SpatialPointsDF
-  pts = rasterToPoints(isor[[i]], spatial = TRUE)
-  names(pts) = "d18O"
-  np[i] = length(pts)
-  
+  #prep data
+  pts = spTransform(wis[[i]], proj4string(grdpts))
+
   #predict at points
-  p = gstat::krige(d18O ~ 1, pts, grdpts, v.2d.mod[[i]], nmin = 3, 
+  p = krige(d18O ~ 1, pts, grdpts, v.2d.mod[[i]], nmin = 3, 
                    nmax = 50, maxdist = 2.5e6)
-  ps[[names(grd)]] = p
-  
+
   #cross validate
-  c = gstat::krige.cv(d18O~1, pts, model = v.2d.mod[[i]], nfold = nrow(pts))
-  cv[[names(grd)]] = c@data
+  c = krige.cv(d18O~1, pts, model = v.2d.mod[[i]], nfold = nrow(pts))
   
   #points to grid
-  r.p = raster::rasterize(p, grd, p$var1.pred)
-  r.v = raster::rasterize(p, grd, p$var1.var)
-  r.ps[[names(grd)]] = r.p
-  r.vs[[names(grd)]] = r.v
+  r.p = rasterize(p, grd, p$var1.pred)
+  r.v = rasterize(p, grd, p$var1.var)
   
   list(c, r.p, r.v)
 }
@@ -72,8 +67,8 @@ save(r.ps.b, file = "isoscape.rda")
 save(r.vs.b, file = "isovar.rda")
 save(cv, file = "krigCV.rda")
 
-writeRaster(r.ps.b, "gwMapCode/out/isoscape_d18O.nc")
-writeRaster(r.vs.b, "gwMapCode/out/isovar_d18O.nc")
+writeRaster(r.ps.b, "gwMapCode/out/isoscape_d18O.nc", overwrite = TRUE)
+writeRaster(r.vs.b, "gwMapCode/out/isovar_d18O.nc", overwrite = TRUE)
 
 #collapse to 2d stats -----
 
@@ -91,35 +86,28 @@ load("iso3d_d2H.rda")
 
 #space for output
 vs = vms = ps = r.ps = r.vs = cv = list()
-np = numeric(nlayers(aq))
 
 registerDoParallel(7)
 
-ko = foreach(i = 1:nlayers(aq)) %dopar% {
+ko = foreach(i = 1:nlayers(aq), .packages = c("gstat", "raster")) %dopar% {
   #grid for prediction
   grd = aq[[i]]
-  grdpts = rasterToPoints(grd, fun = function(x){x==1}, spatial = TRUE)
+  grdpts = rasterToPolygons(grd, fun = function(x){x==1})
   
-  #convert raster to SpatialPointsDF
-  pts = rasterToPoints(isor[[i]], spatial = TRUE)
-  names(pts) = "d2H"
-  np[i] = length(pts)
+  #prep data
+  pts = spTransform(wis[[i]], proj4string(grdpts))
   
   #predict at points
-  p = gstat::krige(d2H ~ 1, pts, grdpts, v.2d.mod[[i]], nmin = 3, 
-                   nmax = 50, maxdist = 2.5e6)
-  ps[[names(grd)]] = p
+  p = krige(d2H ~ 1, pts, grdpts, v.2d.mod[[i]], nmin = 3, 
+            nmax = 50, maxdist = 2.5e6)
   
   #cross validate
-  c = gstat::krige.cv(d2H~1, pts, model = v.2d.mod[[i]], nfold = nrow(pts))
-  cv[[names(grd)]] = c@data
-  
+  c = krige.cv(d2H~1, pts, model = v.2d.mod[[i]], nfold = nrow(pts))
+
   #points to grid
-  r.p = raster::rasterize(p, grd, p$var1.pred)
-  r.v = raster::rasterize(p, grd, p$var1.var)
-  r.ps[[names(grd)]] = r.p
-  r.vs[[names(grd)]] = r.v
-  
+  r.p = rasterize(p, grd, p$var1.pred)
+  r.v = rasterize(p, grd, p$var1.var)
+
   list(c, r.p, r.v)
 }
 stopImplicitCluster()
@@ -150,5 +138,5 @@ save(r.ps.b, file = "isoscape_d2H.rda")
 save(r.vs.b, file = "isovar_d2H.rda")
 save(cv, file = "krigCV_d2H.rda")
 
-writeRaster(r.ps.b, "gwMapCode/out/isoscape_d2H.nc")
-writeRaster(r.vs.b, "gwMapCode/out/isovar_d2H.nc")
+writeRaster(r.ps.b, "gwMapCode/out/isoscape_d2H.nc", overwrite = TRUE)
+writeRaster(r.vs.b, "gwMapCode/out/isovar_d2H.nc", overwrite = TRUE)

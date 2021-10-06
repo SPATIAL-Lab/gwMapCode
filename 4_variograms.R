@@ -143,6 +143,8 @@ for(i in seq_along(depths$ud)){
   wis[[i]] = wi
 }
 
+save(wis, file = "wis.rda")
+
 #Fit variograms for oxygen ----
 v.2d.samp = v.2d.mod = list()
 
