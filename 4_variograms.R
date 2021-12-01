@@ -94,7 +94,7 @@ o.var2$timelag = exp(o.var2$timelag)
 save(o.var1, o.var2, file = "stVario.rda")
 
 #Supplementary Figure 3
-png("FigS3.png", width = 5.5, height = 3.5, units = "in", res = 600)
+png("S3_Fig.png", width = 5.5, height = 3.5, units = "in", res = 600)
 plot(o.var1, ylab = "Vertical distance (m)", xlab = "Horizontal distance (m)", 
      log = "y", col = heat.colors(16))
 dev.off()
@@ -177,7 +177,7 @@ for(i in seq_along(depths$ud)){
 save(v.2d.samp, v.2d.mod, file = "2dVario.rda")
 
 #Supplementary figure 2
-png("FigS2.png", width = 5.5, height = 7, units = "in", res = 600)
+png("S2_Fig.png", width = 5.5, height = 7, units = "in", res = 600)
 layout(matrix(c(1, 2), nrow = 2))
 par(mar = c(5, 5, 1, 1))
 

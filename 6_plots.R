@@ -28,13 +28,30 @@ plot(cdr, col = c("grey", "blue", "red", "purple"))
 saveWidget(cubeview(gdr[[7:1]], c(-0.5, 0.5, 1.5), col.regions = c("grey", "blue"), na.color = "white"), "gdr.html")
 saveWidget(cubeview(idr[[7:1]], c(-0.5, 0.5, 1.5), col.regions = c("grey", "red"), na.color = "white"), "idr.html")
 saveWidget(cubeview(cdr[[7:1]], c(-0.5, 0.5, 1.5, 2.5, 3.5), col.regions = c("grey", "blue", "red", "purple"), 
-                    na.color = "white"), "FigS1.html")
+                    na.color = "white"), "S1_Fig.html")
 
 #Plots...
+states = readOGR("states_shapefile/states.shp")
+states = spTransform(states, proj4string(cdr))
+states = states[2:50,]
 
 #FIGURE1 wd database and wigw database depth distributions
-png("Fig1.png", width = 5, height = 4, units = "in", res = 600)
-par(mar = c(5,5,1,1))
+png("Fig1.png", width = 7, height = 5, units = "in", res = 600)
+layout(matrix(c(1,3,2,3), nrow = 2, byrow = TRUE), 
+       widths = c(lcm(4 * 2.54), lcm(3 * 2.54)),
+       heights = rep(lcm(2.5 * 2.54), 2))
+
+par(mar = rep(0, 4))
+plot(states, col = "grey90", border = "grey50")
+points(wd, pch = ".", col = "steelblue2")
+text(-2.4e6, 3e6, "A", cex = 1.5)
+
+plot(states, col = "grey90", border = "grey50")
+points(wigw.usa, pch = ".", col = "tomato1")
+points(wigw.usa[wigw.usa$Prjc_ID == 225,], pch = ".")
+text(-2.4e6, 3e6, "B", cex = 1.5)
+
+par(mar = c(7,5,5,1))
 plot(density(wd$lnWD, adjust = 4), main = "", 
      xlab = "Well depth (m)", col = "steelblue2", axes = FALSE)
 axis(2)
@@ -42,18 +59,14 @@ axis(1, log(c(1, 10, 25, 100, 500, 2000)),
      c(1, 10, 25, 100, 500, 2000))
 box()
 lines(density(wigw.usa$lnWD), col = "tomato1")
-text(0, 0.4, paste("n =", length(wd)), col = "steelblue2", pos = 4)
-text(0, 0.35, paste("n =", length(wigw.usa)), col = "tomato1", pos = 4)
+text(0, 0.43, "C", cex = 1.5)
 dev.off()
 
 #Explore comparisons between USGS prinicipal aquifers and grid 
 aqs = readOGR("USGS_layers/aquifrp025.shp")
-states = readOGR("states_shapefile/states.shp")
 proj4string(aqs) = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
 aqs = spTransform(aqs, proj4string(cdr))
-states = spTransform(states, proj4string(cdr))
 aqs = aqs[states,]
-states = states[2:50,]
 
 aqz = unique(aqs$AQ_NAME)
 i=3
@@ -160,9 +173,9 @@ load("isoscape.rda")
 load("isovar.rda")
 load("variograms.rda")
 load("variomodels.rda")
-saveWidget(cubeview(r.ps.b[[7:1]], seq(-20, 4, by=2)), "FigS5.html")
+saveWidget(cubeview(r.ps.b[[7:1]], seq(-20, 4, by=2)), "S5_Fig.html")
 saveWidget(cubeview(r.vs.b[[7:1]], c(0.4, 0.6, 0.9, 1.3, 1.8, 2.4, 3.1, 4)), 
-           "FigS6.html")
+           "S6_Fig.html")
 
 #FIGURE 3 showing example layers from isoscape
 png("Fig3.png", res = 600, units = "in", width = 8, height = 12)
@@ -207,7 +220,7 @@ dev.off()
 #compare with precip isoscape
 #####
 
-pcp = raster("C:/Users/u0133977/Dropbox/Archived/Utilities/IsotopeMaps/Oma.asc")
+pcp = raster("Oma.asc")
 pcp = projectRaster(pcp, r.ps.b)
 
 #first compare our map w/ the most recent Terzer product, downloaded from 
@@ -223,7 +236,37 @@ pcp.t = projectRaster(pcp.t, pcp)
 plot(pcp.t - pcp)
 plot(r.ps.b[[c(1, 3, 5)]] - pcp.t)
 
-#now GW-PCP differences
+#Figure 4 showing GWI data v Precip isoscape values
+pwg = extract(pcp, wigw.usa)
+pal = brewer.pal(8, "YlGnBu")
+pal = pal[2:8]
+coli = findInterval(wigw.usa$lnWD, depths$ud)
+
+png("Fig4.png", units = "in", res = 600, width = 6, height = 4)
+layout(matrix(c(1,2), nrow = 1), widths = c(5,1))
+par(mar = c(5, 5, 2, 1))
+plot(pwg, wigw.usa$d18O, col = pal[coli],
+     xlab = expression("Precipitation "*delta^{18}*"O (\u2030)"),
+     ylab = expression("Groundwater "*delta^{18}*"O (\u2030)"))
+abline(0, 1)
+par(mar = rep(0, 4))
+plot(0, type = "n", axes = FALSE, xlab = "")
+legend("left", legend = exp(c(depths$ud)), pch = 1, col = pal, 
+       bty = "n", title = "Depth\nInterval\nTop (m)")
+dev.off()
+
+#Some statistics for the layers
+for(i in 1:7){
+  cat(paste(exp(depths$ud[i])), mean(wigw.usa$d18O[coli == i] - 
+                                       pwg[coli == i], na.rm = TRUE),
+      "\n")
+}
+mean(wigw.usa$d18O[coli %in% c(1,2,3)] - pwg[coli %in% c(1,2,3)], 
+     na.rm = TRUE)
+mean(wigw.usa$d18O[coli %in% c(6,7)] - pwg[coli %in% c(6,7)], 
+     na.rm = TRUE)
+
+#now GW-PCP isoscape differences
 gwdif = r.ps.b - pcp
 
 save(gwdif, file = "gwdiff.rda")
@@ -232,10 +275,10 @@ load("gwdiff.rda")
 breaks = c(-13, -4, -2, -1, 0, 1, 2, 4, 10)
 
 cols = brewer.pal(8, "RdYlBu")
-saveWidget(cubeview(gwdif[[7:1]], breaks, rev(cols)), "FigS7.html")
+saveWidget(cubeview(gwdif[[7:1]], breaks, rev(cols)), "S7_Fig.html")
 
-#FIGURE 4 showing precip-gw layers
-png("Fig4.png", res = 600, units = "in", width = 8.2, height = 12)
+#Figure 5 showing precip-gw layers
+png("Fig5.png", res = 600, units = "in", width = 8.2, height = 12)
 
 layout(matrix(c(1,2,3), nrow = 3))
 par(mai = c(0.1, 0.1, 0.1, 0.1))
@@ -291,11 +334,11 @@ legend(-7.7, 0.8, paste(exp(depths[,1]), "-", exp(depths[,2]), "m"),
        lty = 1, col = c(1:7), bty = "n")
 dev.off()
   
-#Plot 2d summary stats and compare with tap -----
+#Figure 6: 2d summary stats and compare with tap -----
 load("tapData.rda")
 load("gw_iso.rda")
 
-png("Fig5.png", width = 8, height = 8, units = "in", res = 600)
+png("Fig6.png", width = 8, height = 8, units = "in", res = 600)
 layout(matrix(c(1, 2), nrow = 2))
 par(mar = c(0, 0, 0, 5))
 
@@ -328,9 +371,9 @@ dev.off()
 #Now xy comparisons
 gwe = extract(gw, tw)
 
-#get precip uncertainty
-pcp = raster("C:/Users/u0133977/Dropbox/Archived/Utilities/IsotopeMaps/Oma.asc")
-pcp.ci = raster("C:/Users/u0133977/Dropbox/Archived/Utilities/IsotopeMaps/OmaCI.asc")
+#get precip & uncertainty, from https://wateriso.utah.edu/waterisotopes/pages/data_access/ArcGrids.html
+pcp = raster("Oma.asc")
+pcp.ci = raster("OmaCI.asc")
 proj4string(pcp.ci) = proj4string(pcp)
 pcp = brick(pcp, pcp.ci / 1.96)
 names(pcp) = c("pcp", "pcp_sd")
@@ -345,7 +388,8 @@ gw.stahl = projectRaster(gw.stahl, gw)
 gwe.stahl = extract(gw.stahl, tw)
 plot(gwe.stahl, tw$d18O)
 
-png("Fig6.png", res = 600, units = "in", width = 4, height = 12)
+##Figure 7: validation plots
+png("Fig7.png", res = 600, units = "in", width = 4, height = 12)
 layout(matrix(c(1, 2, 3), nrow = 3))
 par("mar" = c(5.1, 5.1, 0.5, 0.5), cex.axis = 1.5, cex.lab = 1.5)
 plot(gwe[,1], tw$d18O, pch = 20, xlim = c(-20, 1), ylim = c(-20, 1), 
@@ -430,7 +474,6 @@ sum(tw$d18O > pwe[,1] - pwe[,2] & tw$d18O < pwe[,1] + pwe[,2], na.rm = TRUE) /
   sum(!is.na(pwe[,1]))
 sum(tw$d18O > pwe[,1] - 1.96 * pwe[,2] & tw$d18O < pwe[,1] + 1.96 * pwe[,2], na.rm = TRUE) / 
   sum(!is.na(pwe[,1]))
-
 
 #exploratory, where is our model closer than the ML SW one?
 twc95.stahl = tw@data[!(tw$d18O > gwe.stahl - 2 * 1.17 & 
